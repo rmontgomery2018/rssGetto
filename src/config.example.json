@@ -1,0 +1,13 @@
+{
+    "cron": "*/15 * * * *", 
+    "doneDirectory": "/Users/user/code/rssGetto/done",
+    "logFile": "",
+    "subscriptions": [
+        {
+            "name": "The Daily Show",
+            "regex": "The Daily Show 2023 \\d\\d \\d\\d .+? \\d\\d 1080p HEVC x265-MeGusta",
+            "rssFeedUrl": "https://feedurl.com",
+            "saveLocation": "/Users/user/code/rssGetto"
+        }
+    ]
+}
