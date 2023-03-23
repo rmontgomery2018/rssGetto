@@ -102,13 +102,13 @@ async function run() {
         const matchedItems = items.filter((item) => item.title.match(regEx));
         for (const item of matchedItems) {
           const publishedDate = new Date(item.pubDate);
-          const lastDownloadedDate = await getLastDownloadDate(item.title);
+          const lastDownloadedDate = await getLastDownloadDate(subscription.name);
           if (
             lastDownloadedDate == null ||
             lastDownloadedDate < publishedDate
           ) {
             await saveTorrent(item.link, path.join(subscription.saveLocation, `${item.title}.torrent`));
-            await updateLastRun(item.title, item.pubDate);
+            await updateLastRun(subscription.name, item.pubDate);
             log(`Added torrent for ${item.title}`);
           }
         }
