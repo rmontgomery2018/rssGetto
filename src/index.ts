@@ -16,7 +16,7 @@ function clearCache() {
 }
 
 async function log(message: string): Promise<void> {
-  const logfile = config.logFile || 'rssGetto.log';
+  const logfile = config.logFile || "rssGetto.log";
   await fs.appendFile(logfile, `${new Date().toISOString()} ${message}\n`);
 }
 
@@ -69,9 +69,9 @@ async function updateLastRun(
 }
 async function rollLogFile() {
   try {
-    const logfile = config.logFile || 'rssGetto.log';
+    const logfile = config.logFile || "rssGetto.log";
     const fileSizeInBytes = (await fs.stat(logfile)).size;
-    const fileSizeInMegabytes = fileSizeInBytes / (1024*1024);
+    const fileSizeInMegabytes = fileSizeInBytes / (1024 * 1024);
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
@@ -79,8 +79,11 @@ async function rollLogFile() {
     const hour = now.getHours();
     const minute = now.getMinutes();
     const second = now.getSeconds();
-    if (fileSizeInMegabytes > .1) {
-      fs.rename(logfile, `${logfile}.${year}${month}${day}${hour}${minute}${second}.old`)
+    if (fileSizeInMegabytes > 0.1) {
+      fs.rename(
+        logfile,
+        `${logfile}.${year}${month}${day}${hour}${minute}${second}.old`
+      );
     }
   } catch (e: any) {
     log(`Error: ${e.message}`);
@@ -94,20 +97,29 @@ async function run() {
         const response = await getRssFeed(subscription.rssFeedUrl);
         const items = response?.rss?.channel?.item;
         if (!items) {
-          log('Bad response from rss feed');
+          log("Bad response from rss feed");
           log(JSON.stringify(response));
           continue;
         }
-        const regEx = new RegExp(subscription.regex);
+        let regexFlags = "";
+        if ((subscription.ignoreCase ?? true) === true) {
+          regexFlags += "i";
+        }
+        const regEx = new RegExp(subscription.regex, regexFlags);
         const matchedItems = items.filter((item) => item.title.match(regEx));
         for (const item of matchedItems) {
           const publishedDate = new Date(item.pubDate);
-          const lastDownloadedDate = await getLastDownloadDate(subscription.name);
+          const lastDownloadedDate = await getLastDownloadDate(
+            subscription.name
+          );
           if (
             lastDownloadedDate == null ||
             lastDownloadedDate < publishedDate
           ) {
-            await saveTorrent(item.link, path.join(subscription.saveLocation, `${item.title}.torrent`));
+            await saveTorrent(
+              item.link,
+              path.join(subscription.saveLocation, `${item.title}.torrent`)
+            );
             await updateLastRun(subscription.name, item.pubDate);
             log(`Added torrent for ${item.title}`);
           }
@@ -117,7 +129,7 @@ async function run() {
           log(`No new items for ${subscription.name}`);
         }
       } catch (e: any) {
-        log (`Error: ${e.message}`);
+        log(`Error: ${e.message}`);
       }
     }
   } catch (e) {
@@ -129,12 +141,12 @@ async function run() {
   }
 }
 
-log("Starting service")
+log("Starting service");
 
 cron.schedule(config.cron, run);
 
 run();
 
-process.on('exit', (code) => {
+process.on("exit", (code) => {
   log(`Stopping with code: ${code}`);
 });
