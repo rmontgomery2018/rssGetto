@@ -3,10 +3,12 @@ import * as path from "path";
 import { XMLParser } from "fast-xml-parser";
 import * as fs from "fs/promises";
 import * as cron from "node-cron";
-import * as config from "./config.json";
 import { RssResponse } from "./models/RssResponse";
+import { Config, loadConfig, Subscription } from "./config.loader";
 
-const subscriptions = config.subscriptions;
+let config: Config;
+
+let subscriptions: Subscription[];
 const parser = new XMLParser();
 
 let cache: { [key: string]: RssResponse } = {};
@@ -91,6 +93,8 @@ async function rollLogFile() {
 }
 async function run() {
   try {
+    subscriptions = config.subscriptions;
+
     await log("Starting run");
     for (const subscription of subscriptions) {
       try {
@@ -141,11 +145,23 @@ async function run() {
   }
 }
 
-log("Starting service");
 
-cron.schedule(config.cron, run);
+function init() {
+  console.log('init - why not use pino')
 
-run();
+  loadConfig(path.join(__dirname, 'config.json'))
+    .then((loadedConf: Config) => {
+      config = loadedConf;
+
+      log("Starting service");
+
+      cron.schedule(config.cron, run);
+      
+      run();
+    })
+}
+
+init();
 
 process.on("exit", (code) => {
   log(`Stopping with code: ${code}`);
