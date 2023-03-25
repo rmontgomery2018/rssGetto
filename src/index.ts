@@ -146,21 +146,20 @@ async function run() {
 }
 
 
-function init() {
-  console.log('init - why not use pino')
+async function init() {
+  try {
+    const loadedConf = await loadConfig(path.join(__dirname, 'config.json'))
+    config = loadedConf;
 
-  loadConfig(path.join(__dirname, 'config.json'))
-    .then((loadedConf: Config) => {
-      config = loadedConf;
+    log('Starting service');
 
-      log("Starting service");
-
-      cron.schedule(config.cron, run);
-      
-      run();
-    }).catch((e) => {
-      console.log('Error initializing...', e)
-    })
+    cron.schedule(config.cron, run);
+    run();
+  }
+  catch(e) {
+    console.log(e);
+    process.exit(1);
+  }
 }
 
 init();
