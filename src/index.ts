@@ -3,10 +3,12 @@ import * as path from "path";
 import { XMLParser } from "fast-xml-parser";
 import * as fs from "fs/promises";
 import * as cron from "node-cron";
-import * as config from "./config.json";
 import { RssResponse } from "./models/RssResponse";
+import { Config, loadConfig, Subscription } from "./config.loader";
 
-const subscriptions = config.subscriptions;
+let config: Config;
+
+let subscriptions: Subscription[];
 const parser = new XMLParser();
 
 let cache: { [key: string]: RssResponse } = {};
@@ -54,8 +56,8 @@ async function getLastDownloadDate(title: string): Promise<Date> {
       return null;
     }
     return new Date(data);
-  } catch (e) {
-    console.log(e);
+  } catch (e: any) {
+    log(`getLastDownloadDate - Error reading file: ${title}`);
     return null;
   }
 }
@@ -91,6 +93,8 @@ async function rollLogFile() {
 }
 async function run() {
   try {
+    subscriptions = config.subscriptions;
+
     await log("Starting run");
     for (const subscription of subscriptions) {
       try {
@@ -132,8 +136,8 @@ async function run() {
         log(`Error: ${e.message}`);
       }
     }
-  } catch (e) {
-    console.log(e);
+  } catch (e: any) {
+    log(`Some bs happened with running this thing. ${(e && e.message) || "..But what we'll never know."}`)
   } finally {
     clearCache();
     log("Finished");
@@ -141,11 +145,24 @@ async function run() {
   }
 }
 
-log("Starting service");
 
-cron.schedule(config.cron, run);
+async function init() {
+  try {
+    const loadedConf = await loadConfig(path.join(__dirname, 'config.json'))
+    config = loadedConf;
 
-run();
+    log('Starting service');
+
+    cron.schedule(config.cron, run);
+    run();
+  }
+  catch(e) {
+    console.log(e);
+    process.exit(1);
+  }
+}
+
+init();
 
 process.on("exit", (code) => {
   log(`Stopping with code: ${code}`);
