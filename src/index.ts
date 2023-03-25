@@ -158,6 +158,8 @@ function init() {
       cron.schedule(config.cron, run);
       
       run();
+    }).catch((e) => {
+      console.log('Error initializing...', e)
     })
 }
 
