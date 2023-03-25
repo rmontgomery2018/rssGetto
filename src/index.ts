@@ -57,7 +57,7 @@ async function getLastDownloadDate(title: string): Promise<Date> {
     }
     return new Date(data);
   } catch (e) {
-    console.log(e);
+    log(`Error reading file: ${title}`);
     return null;
   }
 }
@@ -136,8 +136,8 @@ async function run() {
         log(`Error: ${e.message}`);
       }
     }
-  } catch (e) {
-    console.log(e);
+  } catch (e: any) {
+    log(`Some bs happened with running this thing. ${(e && e.message) || "..But what we'll never know."}`)
   } finally {
     clearCache();
     log("Finished");
