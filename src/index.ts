@@ -56,8 +56,8 @@ async function getLastDownloadDate(title: string): Promise<Date> {
       return null;
     }
     return new Date(data);
-  } catch (e) {
-    log(`Error reading file: ${title}`);
+  } catch (e: any) {
+    log(`getLastDownloadDate - Error reading file: ${title}`);
     return null;
   }
 }
