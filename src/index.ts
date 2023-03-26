@@ -4,7 +4,9 @@ import { XMLParser } from "fast-xml-parser";
 import * as fs from "fs/promises";
 import * as cron from "node-cron";
 import { RssResponse } from "./models/RssResponse";
-import { Config, loadConfig, Subscription } from "./config.loader";
+import { loadConfig } from "./config.loader";
+import { log, rollLogFile } from "./logger";
+import { Config, Subscription } from "./models/Config";
 
 let config: Config;
 
@@ -15,11 +17,6 @@ let cache: { [key: string]: RssResponse } = {};
 
 function clearCache() {
   cache = {};
-}
-
-async function log(message: string): Promise<void> {
-  const logfile = config.logFile || "rssGetto.log";
-  await fs.appendFile(logfile, `${new Date().toISOString()} ${message}\n`);
 }
 
 async function getRssFeed(rssFeedUrl: string): Promise<RssResponse> {
@@ -69,28 +66,7 @@ async function updateLastRun(
   const fileName = path.join(config.doneDirectory, `${title}.run`);
   return fs.writeFile(fileName, lastPubDate);
 }
-async function rollLogFile() {
-  try {
-    const logfile = config.logFile || "rssGetto.log";
-    const fileSizeInBytes = (await fs.stat(logfile)).size;
-    const fileSizeInMegabytes = fileSizeInBytes / (1024 * 1024);
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const day = now.getDate();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
-    const second = now.getSeconds();
-    if (fileSizeInMegabytes > 0.1) {
-      fs.rename(
-        logfile,
-        `${logfile}.${year}${month}${day}${hour}${minute}${second}.old`
-      );
-    }
-  } catch (e: any) {
-    log(`Error: ${e.message}`);
-  }
-}
+
 async function run() {
   try {
     subscriptions = config.subscriptions;
@@ -106,7 +82,7 @@ async function run() {
           continue;
         }
         let regexFlags = "";
-        if ((subscription.ignoreCase ?? true) === true) {
+        if ((subscription.ignoreCase || true) === true) {
           regexFlags += "i";
         }
         const regEx = new RegExp(subscription.regex, regexFlags);
@@ -137,7 +113,7 @@ async function run() {
       }
     }
   } catch (e: any) {
-    log(`Some bs happened with running this thing. ${(e && e.message) || "..But what we'll never know."}`)
+    log(`Error: ${e && e.message}`);
   } finally {
     clearCache();
     log("Finished");
@@ -145,18 +121,16 @@ async function run() {
   }
 }
 
-
 async function init() {
   try {
-    const loadedConf = await loadConfig(path.join(__dirname, 'config.json'))
+    const loadedConf = await loadConfig(path.join(__dirname, "config.json"));
     config = loadedConf;
 
-    log('Starting service');
+    log("Starting service");
 
     cron.schedule(config.cron, run);
     run();
-  }
-  catch(e) {
+  } catch (e) {
     console.log(e);
     process.exit(1);
   }

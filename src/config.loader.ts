@@ -1,28 +1,26 @@
 import * as fs from "fs/promises";
-
-export interface Subscription {
-  name: string,
-  regex: string,
-  rssFeedUrl: string,
-  saveLocation: string,
-  ignoreCase: boolean
-}
-
-export interface Config {
-  cron: string,
-  doneDirectory: string,
-  logFile: string,
-  subscriptions: Subscription[]
-}
+import { log } from "./logger";
+import { Config } from "./models/Config";
 
 /**
  * Loads config from file path
  * @param {string} file path to config
  * @returns {Promise<Config>} resulting config
  */
-export async function loadConfig(file: string) {
-  const jsonRaw = await fs.readFile(file, { encoding: 'utf8'});
+export async function loadConfig(file: string): Promise<Config> {
+  const jsonRaw = await fs.readFile(file, { encoding: "utf8" });
   const json = JSON.parse(jsonRaw);
 
-  return json as Config
+  config = json as Config;
+  return config;
+}
+
+let config: Config = null;
+
+export function getConfig(): Config {
+  if (!config) {
+    log("Config not loaded. Load config.");
+  }
+
+  return config;
 }

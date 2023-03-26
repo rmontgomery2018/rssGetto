@@ -7,10 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "gts lint",
     "clean": "gts clean",
-    "build": "tsc",
+    "build": "tsc && cp ./src/config.json ./out/config.json ",
     "compile": "tsc",
     "fix": "gts fix",
-    "start": "npm run build && cp ./src/config.json ./out/config.json && node ./out/index.js",
+    "start": "npm run build && node ./out/index.js",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
     "posttest": "npm run lint"
