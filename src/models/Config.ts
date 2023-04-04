@@ -1,9 +1,14 @@
+export enum SubscriptionType{
+    Movie = 'movie',
+    TvShow = 'tvshow'
+}
 export interface Subscription {
   name: string;
   regex: string;
   rssFeedUrl: string;
   saveLocation: string;
   ignoreCase: boolean;
+  subscriptionType: SubscriptionType;
 }
 
 export interface Config {

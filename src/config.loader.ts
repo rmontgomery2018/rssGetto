@@ -11,6 +11,12 @@ export async function loadConfig(file: string): Promise<Config> {
   const jsonRaw = await fs.readFile(file, { encoding: "utf8" });
   const json = JSON.parse(jsonRaw);
 
+  for (const subscription of json.subscriptions) {
+    if (subscription.subscriptionType) {
+      subscription.subscriptionType = subscription.subscriptionType.toLowerCase()
+    }
+  }
+
   config = json as Config;
   return config;
 }

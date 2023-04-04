@@ -3,10 +3,10 @@ import * as path from "path";
 import { XMLParser } from "fast-xml-parser";
 import * as fs from "fs/promises";
 import * as cron from "node-cron";
-import { RssResponse } from "./models/RssResponse";
+import { Item, RssResponse } from "./models/RssResponse";
 import { loadConfig } from "./config.loader";
 import { log, rollLogFile } from "./logger";
-import { Config, Subscription } from "./models/Config";
+import { Config, Subscription, SubscriptionType } from "./models/Config";
 
 let config: Config;
 
@@ -75,7 +75,7 @@ async function run() {
     for (const subscription of subscriptions) {
       try {
         const response = await getRssFeed(subscription.rssFeedUrl);
-        const items = response?.rss?.channel?.item;
+        let items = response?.rss?.channel?.item;
         if (!items) {
           log("Bad response from rss feed");
           log(JSON.stringify(response));
@@ -86,11 +86,17 @@ async function run() {
           regexFlags += "i";
         }
         const regEx = new RegExp(subscription.regex, regexFlags);
+
+        if (!Array.isArray(items)) {
+          items = [items];
+        }
+
         const matchedItems = items.filter((item) => item.title.match(regEx));
         for (const item of matchedItems) {
           const publishedDate = new Date(item.pubDate);
+          const subscriptionStatusName = subscription.subscriptionType === SubscriptionType.TvShow ? subscription.name : item.title;
           const lastDownloadedDate = await getLastDownloadDate(
-            subscription.name
+            subscriptionStatusName
           );
           if (
             lastDownloadedDate == null ||
@@ -100,7 +106,7 @@ async function run() {
               item.link,
               path.join(subscription.saveLocation, `${item.title}.torrent`)
             );
-            await updateLastRun(subscription.name, item.pubDate);
+            await updateLastRun(subscriptionStatusName, item.pubDate);
             log(`Added torrent for ${item.title}`);
           }
         }
