@@ -61,7 +61,8 @@ async function cleanUpLogFiles(): Promise<void> {
       return;
     }
 
-    const regex = new RegExp(`${getLogFileName()}.+\.${oldLogFileExtension}`);
+    const fileName = path.basename(getLogFileName());
+    const regex = new RegExp(`${fileName}.+\.${oldLogFileExtension}`);
     const files = await (
       await fs.readdir(config.log?.directory || ".")
     )
