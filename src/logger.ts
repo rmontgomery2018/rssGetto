@@ -69,7 +69,7 @@ async function cleanUpLogFiles(): Promise<void> {
       .filter((file) => file.match(regex))
       .sort()
       .reverse();
-    if (files.length > (config.log?.numOldLogs || 1) + 1) {
+    if (files.length > (config.log?.numOldLogs || 1)) {
       for (let i = config.log?.numOldLogs || 1; i < files.length; i++) {
         const file = files[i];
         try {
